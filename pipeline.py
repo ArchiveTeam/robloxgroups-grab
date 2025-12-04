@@ -78,8 +78,8 @@ if not WGET_AT:
 # It will be added to the WARC files and reported to the tracker.
 VERSION = '20251130.01'
 USER_AGENT = 'Mozilla/5.0 (X11; Linux i686; rv:145.0) Gecko/20100101 Firefox/145.0'
-TRACKER_ID = 'adobeaero'
-TRACKER_HOST = 'legacy-api.arpa.li'
+TRACKER_ID = 'robloxgroups'
+TRACKER_HOST = 'host.docker.internal'
 MULTI_ITEM_SIZE = 100
 
 
@@ -202,7 +202,7 @@ def get_hash(filename):
 
 CWD = os.getcwd()
 PIPELINE_SHA1 = get_hash(os.path.join(CWD, 'pipeline.py'))
-LUA_SHA1 = get_hash(os.path.join(CWD, 'adobeaero.lua'))
+LUA_SHA1 = get_hash(os.path.join(CWD, 'robloxgroups.lua'))
 
 def stats_id_function(item):
     d = {
@@ -228,7 +228,7 @@ class WgetArgs(object):
             '--reject-reserved-subnets',
             #'--prefer-family', ('IPv4' if 'PREFER_IPV4' in os.environ else 'IPv6'),
             '--content-on-error',
-            '--lua-script', 'adobeaero.lua',
+            '--lua-script', 'robloxgroups.lua',
             '-o', ItemInterpolation('%(item_dir)s/wget.log'),
             '--no-check-certificate',
             '--output-document', ItemInterpolation('%(item_dir)s/wget.tmp'),
@@ -240,7 +240,7 @@ class WgetArgs(object):
             '--timeout', '30',
             '--connect-timeout', '1',
             '--tries', 'inf',
-            '--domains', 'adobe.io,behance.net',
+            '--domains', 'roblox.com,rbxcdn.com',
             '--span-hosts',
             '--waitretry', '30',
             '--warc-file', ItemInterpolation('%(item_dir)s/%(warc_file_base)s'),
@@ -299,9 +299,9 @@ class WgetArgs(object):
 project = Project(
     title=TRACKER_ID,
     project_html='''
-        <img class="project-logo" alt="Project logo" src="https://wiki.archiveteam.org/images/thumb/0/0f/Adobe_Aero_icon.png/615px-Adobe_Aero_icon.png" height="50px" title=""/>
-        <h2>Adobe Aero <span class="links"><a href="">Website</a> &middot; <a href="http://tracker.archiveteam.org/adobeaero/">Leaderboard</a> &middot; <a href="https://wiki.archiveteam.org/index.php/Adobe_Aero">Wiki</a></span></h2>
-        <p>Archiving Adobe Aero.</p>
+        <img class="project-logo" alt="Project logo" src="https://wiki.archiveteam.org/images/2/22/Roblox_logo_2017.png" height="50px" title=""/>
+        <h2>Roblox Groups <span class="links"><a href="">Website</a> &middot; <a href="http://tracker.archiveteam.org/robloxgroups/">Leaderboard</a> &middot; <a href="https://wiki.archiveteam.org/index.php/Roblox">Wiki</a></span></h2>
+        <p>Archiving Roblox Groups.</p>
     '''
 )
 
