@@ -281,9 +281,9 @@ class WgetArgs(object):
                 wget_args.extend(['--warc-header', 'robloxgroups-api-member: '+item_value])
 
                 if len(cursor) > 0:
-                    wget_args.append('https://groups.roblox.com/v1/groups/{}/users?limit=100&cursor={}&sortOrder=Asc'.format(item_value))
+                    wget_args.append('https://groups.roblox.com/v1/groups/{}/users?limit=100&cursor={}&sortOrder=Asc'.format(group_id, cursor))
                 else:
-                    wget_args.append('https://groups.roblox.com/v1/groups/{}/users?limit=100&sortOrder=Asc'.format(item_value))
+                    wget_args.append('https://groups.roblox.com/v1/groups/{}/users?limit=100&sortOrder=Asc'.format(group_id))
             elif item_type == 'group-wall':
                 group_id, cursor = item_value.split(':', 1)
                 # requests.get('https://cdn.cp.adobe.io/content/2/dcx/{}/content/manifest/version/head'.format(item_value))
