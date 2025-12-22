@@ -35,9 +35,12 @@ local item_patterns = {
   ["^https?://apis%.roblox%.com/community%-links/v1/groups/([0-9]+)/shout"]="group-shout",
   ["^https?://groups%.roblox%.com/v1/groups/([0-9]+)/roles"]="group-roles",
   ["^https?://groups%.roblox%.com/v1/featured%-content/event%?groupId=([0-9]+)"]="group-featuredcontent",
-  ["^https?://groups%.roblox%.com/v1/groups/([0-9]+)/name%-history(.*)$"]="group-namehistory", -- Needs fixing
-  ["^https?://groups%.roblox%.com/v1/groups/([0-9]+)/users(.*)$"]="group-members", -- Needs fixing
-  ["^https?://groups%.roblox%.com/v2/groups/([0-9]+)/wall/posts(.*)$"]="group-wall", -- Needs fixing
+  ["^https?://groups%.roblox%.com/v1/groups/([0-9]+)/name%-history%?limit=100&sortOrder=Asc"]="group-namehistory",
+  ["^https?://groups%.roblox%.com/v1/groups/([0-9]+)/name%-history%?limit=100&cursor=(.*)$"]="group-namehistory-cursored", -- Needs fixing
+  ["^https?://groups%.roblox%.com/v1/groups/([0-9]+)/users%?limit=100&sortOrder=Asc"]="group-members",
+  ["^https?://groups%.roblox%.com/v1/groups/([0-9]+)/users%?limit=100&cursor=(.*)$"]="group-members-cursored", -- Needs fixing
+  ["^https?://groups%.roblox%.com/v2/groups/([0-9]+)/wall/posts%?limit=100&sortOrder=Asc"]="group-wall",
+  ["^https?://groups%.roblox%.com/v2/groups/([0-9]+)/wall/posts%?limit=100&cursor=(.*)$"]="group-wall-cursored", -- Needs fixing
 }
 
 abort_item = function(item)
@@ -76,33 +79,113 @@ processed = function(url)
   return false
 end
 
--- discover_item = function(target, item)
---   if not target[item] then
--- --print("discovered", item)
---     target[item] = true
---     if string.match(item, "^[a-z]+%-user:") then
---       local v = string.match(item, "^[^:]+:(.+)$")
---       discover_item(target, "api-user:" .. v)
---       discover_item(target, "b-user:" .. v)
---     end
---     return true
---   end
---   return false
--- end
+discover_item = function(target, item)
+  if not target[item] then
+    print("discovered", item)
+    target[item] = true
+    -- if string.match(item, "^[a-z]+%-user:") then
+    --   local v = string.match(item, "^[^:]+:(.+)$")
+    --   discover_item(target, "api-user:" .. v)
+    --   discover_item(target, "b-user:" .. v)
+    -- end
+    return true
+  end
+
+  return false
+end
 
 find_item = function(url)
+  -- https://stackoverflow.com/q/28916182
+  -- License: CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/deed.en
+  -- parseurl is slightly changed by AI
+  local function urldecode(s)
+    s = s:gsub('+', ' '):gsub('%%(%x%x)', function(h)
+      return string.char(tonumber(h, 16))
+    end)
+    return s
+  end
+
+  local function parseurl(s)
+    if not s then return {} end
+    s = tostring(s)
+    -- if a full URL was passed, use only the query portion
+    s = s:match("%?(.*)$") or s
+    -- allow zero or more leading spaces
+    s = s:match("^%s*(.*)$") or ""
+    local ans = {}
+    for k, v in s:gmatch("([^&=?]+)=([^&=?]+)") do
+      ans[k] = urldecode(v)
+    end
+    return ans
+  end
+  --
+
   if ids[url] then
     return nil
   end
   local value = nil
   local type_ = nil
+  local itercount = 1
+  local group_id = nil
+
   for pattern, name in pairs(item_patterns) do
-    value = string.match(url, pattern)
-    type_ = name
+    if string.find(url, "cursor=") == nil then
+      for match in string.gmatch(url, "%d+") do
+        if itercount == 2 then
+          value = match
+          break
+        else
+          itercount = itercount + 1
+        end
+      end
+
+      -- Group meta is at the bottom because all items
+      -- would otherwise be constantly flagged as a meta item
+      if string.find(url, "community%-links") ~= nil then
+        type_ = "group-shout"
+      elseif string.find(url, "roles") ~= nil then
+        type_ = "group-roles"
+      elseif string.find(url, "featured%-content") ~= nil then
+        type_ = "group-featuredcontent"
+      elseif string.find(url, "name%-history") ~= nil then
+        type_ = "group-namehistory"
+      elseif string.find(url, "users") ~= nil then
+        type_ = "group-members"
+      elseif string.find(url, "wall") ~= nil then
+        type_ = "group-wall"
+      elseif string.find(url, "groups") ~= nil then
+        type_ = "group-meta"
+      end
+    elseif string.find(url, "cursor=") ~= nil then
+      if string.find(url, "name%-history") ~= nil then
+        type_ = "group-namehistory-cursored"
+      elseif string.find(url, "users") ~= nil then
+        type_ = "group-members-cursored"
+      elseif string.find(url, "wall") ~= nil then
+        type_ = "group-wall-cursored"
+      end
+
+      for match in string.gmatch(url, "%d+") do
+        if itercount == 2 then
+          group_id = match
+          break
+        else
+          itercount = itercount + 1
+        end
+      end
+
+      value = group_id..":"..parseurl(url).cursor
+    end
+
     if value then
       break
     end
   end
+
+  -- testing
+  -- io.stdout:write("item is "..type_..":"..value.."\n")
+  -- io.stdout:flush()
+
   if value and type_ then
     return {
       ["value"]=value,
@@ -200,20 +283,20 @@ allowed = function(url, parenturl)
   return false
 end
 
-wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_parsed, iri, verdict, reason)
-  local url = urlpos["url"]["url"]
-  local html = urlpos["link_expect_html"]
+-- wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_parsed, iri, verdict, reason)
+--   local url = urlpos["url"]["url"]
+--   local html = urlpos["link_expect_html"]
 
-  --[[if allowed(url, parent["url"])
-    and not processed(url)
-    and string.match(url, "^https://")
-    and not addedtolist[url] then
-    addedtolist[url] = true
-    return true
-  end]]
+--   --[[if allowed(url, parent["url"])
+--     and not processed(url)
+--     and string.match(url, "^https://")
+--     and not addedtolist[url] then
+--     addedtolist[url] = true
+--     return true
+--   end]]
 
-  return false
-end
+--   return false
+-- end
 
 decode_codepoint = function(newurl)
   newurl = string.gsub(
@@ -420,6 +503,74 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     end
   end
 
+  local type_ = nil
+  local group_id = nil
+  local itercount = 1
+
+  for pattern, name in pairs(item_patterns) do
+    if string.match(url, pattern) and (name == "group-wall" or name == "group-wall-cursored" or name == "group-namehistory" or name == "group-namehistory-cursored" or name == "group-members" or name == "group-members-cursored") then
+      type_ = name
+
+      for match in string.gmatch(url, "%d+") do
+        if itercount == 2 then
+          group_id = match
+          break
+        else
+          itercount = itercount + 1
+        end
+      end
+    end
+  end
+
+  if type_ == nil then
+    return urls
+  end
+
+  local file_contents = read_file(file)
+
+  if type_ == "group-wall" or type_ == "group-wall-cursored" then
+    local nextpagecursor = cjson.decode(file_contents)["nextPageCursor"]
+
+    if nextpagecursor == cjson.null then
+      return
+    end
+
+    local next_url = "https://groups.roblox.com/v2/groups/"..group_id.."/wall/posts?limit=100&cursor="..tostring(nextpagecursor).."&sortOrder=Asc"
+    table.insert(urls, { url=next_url, link_expect_html=0, link_expect_css=0, method="GET" })
+    discover_item(discovered_items, "group-wall-cursored:"..group_id..":"..nextpagecursor)
+    discover_item(discovered_outlinks, "group-wall-cursored:"..group_id..":"..nextpagecursor)
+  end
+
+  if type_ == "group-namehistory" or type_ == "group-namehistory-cursored" then
+    local nextpagecursor = cjson.decode(file_contents)["nextPageCursor"]
+
+    if nextpagecursor == cjson.null then
+      return
+    end
+
+    local next_url = "https://groups.roblox.com/v1/groups/"..group_id.."/name-history?limit=100&cursor="..tostring(nextpagecursor).."&sortOrder=Asc"
+    table.insert(urls, { url=next_url, link_expect_html=0, link_expect_css=0, method="GET" })
+    discover_item(discovered_items, "group-namehistory-cursored:"..group_id..":"..nextpagecursor)
+    discover_item(discovered_outlinks, "group-namehistory-cursored:"..group_id..":"..nextpagecursor)
+  end
+
+  if type_ == "group-members" or type_ == "group-members-cursored" then
+    local nextpagecursor = cjson.decode(file_contents)["nextPageCursor"]
+
+    if nextpagecursor == cjson.null then
+      return
+    end
+
+    local next_url = "https://groups.roblox.com/v1/groups/"..group_id.."/users?limit=100&cursor="..tostring(nextpagecursor).."&sortOrder=Asc"
+    table.insert(urls, { url=next_url, link_expect_html=0, link_expect_css=0, method="GET" })
+    discover_item(discovered_items, "group-members-cursored:"..group_id..":"..nextpagecursor)
+    discover_item(discovered_outlinks, "group-members-cursored:"..group_id..":"..nextpagecursor)
+
+    -- testing
+    -- io.stdout:write("discovered item ".."group-members-cursored:"..group_id..":"..nextpagecursor.."\n")
+    -- io.stdout:flush()
+  end
+
   return urls
 end
 
@@ -483,7 +634,7 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     io.stdout:flush()
     tries = tries + 1
     local maxtries = 11
-    if status_code == 429 or status_code == 500 then
+    if status_code == 400 or status_code == 403 or status_code == 429 or status_code == 500 then
       tries = maxtries + 1
     end
     if tries > maxtries then
