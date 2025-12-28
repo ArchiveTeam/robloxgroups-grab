@@ -351,7 +351,8 @@ pipeline = Pipeline(
             'item_dir': ItemValue('item_dir'),
             'item_names': ItemValue('item_name_newline'),
             'warc_file_base': ItemValue('warc_file_base'),
-            'concurrency': ItemValue('concurrency')
+            'concurrency': ItemValue('concurrency'),
+            'DO_DEBUG': os.environ.get('DO_DEBUG')
         }
     ),
     SetBadUrls(),

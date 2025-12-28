@@ -3,7 +3,6 @@ local http = require("socket.http")
 local https = require("ssl.https")
 local cjson = require("cjson")
 local utf8 = require("utf8")
-local html_entities = require("htmlEntities")
 
 local item_dir = os.getenv("item_dir")
 local warc_file_base = os.getenv("warc_file_base")
@@ -669,6 +668,10 @@ end
 
 wget.callbacks.finish = function(start_time, end_time, wall_time, numurls, total_downloaded_bytes, total_download_time)
   local function submit_backfeed(items, key)
+    if os.getenv("DO_DEBUG") and os.getenv("DO_DEBUG") ~= "" then
+      print("Skipping submitting items for " .. key)
+      return
+    end
     local tries = 0
     local maxtries = 5
     while tries < maxtries do
@@ -699,8 +702,8 @@ wget.callbacks.finish = function(start_time, end_time, wall_time, numurls, total
   end
   file:close()
   for key, data in pairs({
-    ["robloxgroups-87q4dwdfeojnu3wr"] = discovered_items,
-    ["urls-han8wprk05vq9x2q"] = discovered_outlinks
+    ["robloxgroups-asdfgh"] = discovered_items,
+    ["urls-asdfgh"] = discovered_outlinks
   }) do
     print("queuing for", string.match(key, "^(.+)%-"))
     local items = nil

@@ -1,0 +1,45 @@
+format 0
+
+[[]]
+not regex .*view-source:.*
+successful
+
+
+[group-meta:2919215]
+some exact https://groups.roblox.com/v1/groups/2919215
+#some discovered group-roles:2919215
+#some discovered group-shout:2919215
+#some discovered group-featuredcontent:2919215
+#some discovered group-namehistory:2919215
+#some discovered group-members:2919215
+#some discovered group-wall:2919215
+
+
+[group-shout:2919215]
+some exact https://apis.roblox.com/community-links/v1/groups/2919215/shout
+
+[group-roles:2919215]
+some exact https://groups.roblox.com/v1/groups/2919215/roles
+
+[group-featuredcontent:2919215]
+some exact https://groups.roblox.com/v1/featured-content/event?groupId=2919215
+
+[group-namehistory:2919215]
+some exact https://groups.roblox.com/v1/groups/2919215/name-history?limit=100&sortOrder=Asc
+
+# TODO namehistory-cursored
+
+[group-members:2919215]
+some exact https://groups.roblox.com/v1/groups/2919215/users?limit=100&sortOrder=Asc
+some discoveredregex group-members-cursored:2919215:eyJrZ\s+
+
+[group-members-cursored:2919215:eyJrZXkiOiJpZF8yendBQUFXUjRmMDBfeEJEd2dfdzA2cUpGUUxBRDV3cDFjWW5yIiwic29ydE9yZGVyIjoiQXNjIiwicGFnaW5nRGlyZWN0aW9uIjoiRm9yd2FyZCIsInBhZ2VOdW1iZXIiOjEsImRpc2NyaW1pbmF0b3IiOiJncm91cElkOjI5MTkyMTUiLCJjb3VudCI6MTAwfQoyNDU1MGY0NjQwMmMxOWQ5ZmYzNmNhYmM2MjI2OGI4ZWRmNjk3ZDg0MWRhMmUyNzE1NWJmNzc2MzJhNzQxMmQ4]
+some exact https://groups.roblox.com/v2/groups/2919215/wall/posts?limit=100&cursor=eyJrZXkiOiJpZF8yendBQUFXUjRmMDBfeEJEd2dfdzA2cUpGUUxBRDV3cDFjWW5yIiwic29ydE9yZGVyIjoiQXNjIiwicGFnaW5nRGlyZWN0aW9uIjoiRm9yd2FyZCIsInBhZ2VOdW1iZXIiOjEsImRpc2NyaW1pbmF0b3IiOiJncm91cElkOjI5MTkyMTUiLCJjb3VudCI6MTAwfQoyNDU1MGY0NjQwMmMxOWQ5ZmYzNmNhYmM2MjI2OGI4ZWRmNjk3ZDg0MWRhMmUyNzE1NWJmNzc2MzJhNzQxMmQ4&sortOrder=Asc
+some discoveredregex group-members-cursored:2919215:eyJrZ\s+
+
+[group-wall:2919215]
+some exact https://groups.roblox.com/v2/groups/2919215/wall/posts?limit=100&sortOrder=Asc
+some discoveredregex group-wall-cursored:2919215:\d\d\s+
+
+[group-wall-cursored:2919215:1742270083_1_d2ea62bc26c8661230df7b4d06a336b8]
+some exact https://groups.roblox.com/v2/groups/2919215/wall/posts?limit=100&cursor=1742270083_1_d2ea62bc26c8661230df7b4d06a336b8&sortOrder=Asc
