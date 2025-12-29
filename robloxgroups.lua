@@ -40,6 +40,7 @@ local item_patterns = {
   ["^https?://groups%.roblox%.com/v1/groups/([0-9]+)/users%?limit=100&cursor=(.*)$"]="group-members-cursored", -- Needs fixing
   ["^https?://groups%.roblox%.com/v2/groups/([0-9]+)/wall/posts%?limit=100&sortOrder=Asc"]="group-wall",
   ["^https?://groups%.roblox%.com/v2/groups/([0-9]+)/wall/posts%?limit=100&cursor=(.*)$"]="group-wall-cursored", -- Needs fixing
+  ["^https?://thumbnails%.roblox%.com/v1/groups/icons%?groupIds=([0-9]+)&size=420x420&format=(.*)$"]="group-icon-json",
 }
 
 abort_item = function(item)
@@ -82,11 +83,7 @@ discover_item = function(target, item)
   if not target[item] then
     print("discovered", item)
     target[item] = true
-    -- if string.match(item, "^[a-z]+%-user:") then
-    --   local v = string.match(item, "^[^:]+:(.+)$")
-    --   discover_item(target, "api-user:" .. v)
-    --   discover_item(target, "b-user:" .. v)
-    -- end
+
     return true
   end
 
@@ -152,6 +149,10 @@ find_item = function(url)
         type_ = "group-members"
       elseif string.find(url, "wall") ~= nil then
         type_ = "group-wall"
+      elseif string.find(url, "thumbnails") ~= nil then
+        type_ = "group-icon-json"
+      elseif string.find(url, "thumbnails") ~= nil then
+        type_ = "group-icon-image"
       elseif string.find(url, "groups") ~= nil then
         type_ = "group-meta"
       end
@@ -257,7 +258,7 @@ allowed = function(url, parenturl)
   end
 
   if string.match(url, "^https?://[^/]*rbxcdn.com/") then
-    if item_type == "asset" then
+    if item_type == "group-icon-image" then
       return true
     end
     return false
@@ -281,21 +282,6 @@ allowed = function(url, parenturl)
 
   return false
 end
-
--- wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_parsed, iri, verdict, reason)
---   local url = urlpos["url"]["url"]
---   local html = urlpos["link_expect_html"]
-
---   --[[if allowed(url, parent["url"])
---     and not processed(url)
---     and string.match(url, "^https://")
---     and not addedtolist[url] then
---     addedtolist[url] = true
---     return true
---   end]]
-
---   return false
--- end
 
 decode_codepoint = function(newurl)
   newurl = string.gsub(
@@ -481,7 +467,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   local itercount = 1
 
   for pattern, name in pairs(item_patterns) do
-    if string.match(url, pattern) and (name == "group-wall" or name == "group-wall-cursored" or name == "group-namehistory" or name == "group-namehistory-cursored" or name == "group-members" or name == "group-members-cursored") then
+    if string.match(url, pattern) and (name == "group-wall" or name == "group-wall-cursored" or name == "group-namehistory" or name == "group-namehistory-cursored" or name == "group-members" or name == "group-members-cursored" or name == "group-icon-json") then
       type_ = name
 
       for match in string.gmatch(url, "%d+") do
@@ -542,6 +528,21 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     -- testing
     -- io.stdout:write("discovered item ".."group-members-cursored:"..group_id..":"..nextpagecursor.."\n")
     -- io.stdout:flush()
+  end
+
+  if type_ == "group-icon-json" then
+    local json_data = cjson.decode(file_contents)["data"]
+
+    -- The json field "data" is empty
+    if #json_data == 0 then
+      return
+    end
+
+    local next_url = json_data[1]["imageUrl"]
+    local item_value = next_url:gsub("https?://", ""):gsub("/", "_")
+
+    table.insert(urls, { url=next_url })
+    discover_item(discovered_items, "group-icon-image:"..item_value)
   end
 
   return urls
