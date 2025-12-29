@@ -476,32 +476,6 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     return result
   end
 
-  local function queue_template(newurl, data)
-    local found = false
-    for k, v in pairs(data) do
-      local newdata = join_tables(data, {})
-      if v then
-        newdata[k] = nil
-        found = true
-      end
-      if type(v) == "string" then
-        v = string.gsub(v, "([^0-9a-zA-Z])", "%%%1")
-        queue_template(string.gsub(newurl, "{" .. k .. "}", v), newdata)
-      elseif type(v) == "table" then
-        for _, s in pairs(v) do
-          s = string.gsub(s, "([^0-9a-zA-Z])", "%%%1")
-          queue_template(string.gsub(newurl, "{" .. k .. "}", s), newdata)
-        end
-      end
-    end
-    if not found then
-      if string.match(newurl, "{[a-z]+}") then
-        error("Template not filled on " .. newurl .. ".")
-      end
-      check(newurl)
-    end
-  end
-
   local type_ = nil
   local group_id = nil
   local itercount = 1
