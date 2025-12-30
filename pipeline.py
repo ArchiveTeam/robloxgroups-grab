@@ -297,7 +297,7 @@ class WgetArgs(object):
                 group_id, cursor = item_value.split(':', 1)
 
                 wget_args.extend(['--warc-header', 'robloxgroups-api-wall-cursored: '+item_value])
-                wget_args.append('https://groups.roblox.com/v2/groups/{}/wall/posts?limit=100&cursor={cursor}&sortOrder=Asc'.format(group_id, cursor))
+                wget_args.append('https://groups.roblox.com/v2/groups/{}/wall/posts?limit=100&cursor={}&sortOrder=Asc'.format(group_id, cursor))
             elif item_type == 'group-icon-json':
                 group_id, image_format = item_value.split(':', 1)
 

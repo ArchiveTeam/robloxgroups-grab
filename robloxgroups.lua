@@ -439,44 +439,25 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   if type_ == "group-wall" or type_ == "group-wall-cursored" then
     local nextpagecursor = cjson.decode(file_contents)["nextPageCursor"]
 
-    if nextpagecursor == cjson.null then
-      return
+    if nextpagecursor ~= cjson.null then
+      discover_item(discovered_items, "group-wall-cursored:"..group_id..":"..nextpagecursor)
     end
-
-    local next_url = "https://groups.roblox.com/v2/groups/"..group_id.."/wall/posts?limit=100&cursor="..tostring(nextpagecursor).."&sortOrder=Asc"
-    table.insert(urls, { url=next_url, link_expect_html=0, link_expect_css=0, method="GET" })
-    discover_item(discovered_items, "group-wall-cursored:"..group_id..":"..nextpagecursor)
-    discover_item(discovered_outlinks, "group-wall-cursored:"..group_id..":"..nextpagecursor)
   end
 
   if type_ == "group-namehistory" or type_ == "group-namehistory-cursored" then
     local nextpagecursor = cjson.decode(file_contents)["nextPageCursor"]
 
-    if nextpagecursor == cjson.null then
-      return
+    if nextpagecursor ~= cjson.null then
+      discover_item(discovered_items, "group-namehistory-cursored:"..group_id..":"..nextpagecursor)
     end
-
-    local next_url = "https://groups.roblox.com/v1/groups/"..group_id.."/name-history?limit=100&cursor="..tostring(nextpagecursor).."&sortOrder=Asc"
-    table.insert(urls, { url=next_url, link_expect_html=0, link_expect_css=0, method="GET" })
-    discover_item(discovered_items, "group-namehistory-cursored:"..group_id..":"..nextpagecursor)
-    discover_item(discovered_outlinks, "group-namehistory-cursored:"..group_id..":"..nextpagecursor)
   end
 
   if type_ == "group-members" or type_ == "group-members-cursored" then
     local nextpagecursor = cjson.decode(file_contents)["nextPageCursor"]
 
-    if nextpagecursor == cjson.null then
-      return
+    if nextpagecursor ~= cjson.null then
+      discover_item(discovered_items, "group-members-cursored:"..group_id..":"..nextpagecursor)
     end
-
-    local next_url = "https://groups.roblox.com/v1/groups/"..group_id.."/users?limit=100&cursor="..tostring(nextpagecursor).."&sortOrder=Asc"
-    table.insert(urls, { url=next_url, link_expect_html=0, link_expect_css=0, method="GET" })
-    discover_item(discovered_items, "group-members-cursored:"..group_id..":"..nextpagecursor)
-    discover_item(discovered_outlinks, "group-members-cursored:"..group_id..":"..nextpagecursor)
-
-    -- testing
-    -- io.stdout:write("discovered item ".."group-members-cursored:"..group_id..":"..nextpagecursor.."\n")
-    -- io.stdout:flush()
   end
 
   if type_ == "group-icon-json" then
