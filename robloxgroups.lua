@@ -42,6 +42,7 @@ local item_patterns = {
   ["^https?://groups%.roblox%.com/v2/groups/([0-9]+)/wall/posts%?limit=100&sortOrder=Asc"]="group-wall",
   ["^https?://groups%.roblox%.com/v2/groups/([0-9]+)/wall/posts%?limit=100&cursor=(.*)$"]="group-wall-cursored", -- Needs fixing
   ["^https?://thumbnails%.roblox%.com/v1/groups/icons%?groupIds=([0-9]+)&size=420x420&format=(.*)$"]="group-icon-json",
+  ["^https?://tr.rbxcdn.com(.*)$"]="group-icon-image",
 }
 
 abort_item = function(item)
@@ -152,7 +153,7 @@ find_item = function(url)
         type_ = "group-wall"
       elseif string.find(url, "thumbnails") ~= nil then
         type_ = "group-icon-json"
-      elseif string.find(url, "thumbnails") ~= nil then
+      elseif string.find(url, "rbxcdn") ~= nil then
         type_ = "group-icon-image"
       elseif string.find(url, "groups") ~= nil then
         type_ = "group-meta"
