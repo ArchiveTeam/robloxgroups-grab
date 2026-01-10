@@ -40,8 +40,9 @@ local item_patterns = {
   ["^https?://groups%.roblox%.com/v1/groups/([0-9]+)/users%?limit=100&cursor=(.*)$"]="group-members-cursored", -- Needs fixing
   ["^https?://groups%.roblox%.com/v2/groups/([0-9]+)/wall/posts%?limit=100&sortOrder=Asc"]="group-wall",
   ["^https?://groups%.roblox%.com/v2/groups/([0-9]+)/wall/posts%?limit=100&cursor=(.*)$"]="group-wall-cursored", -- Needs fixing
-  ["^https?://thumbnails%.roblox%.com/v1/groups/icons%?groupIds=([0-9]+)&size=420x420&format=(.*)$"]="group-icon-json",
 }
+
+io.stdout:setvbuf("no") -- So prints are not buffered - http://lua.2524044.n2.nabble.com/print-stdout-and-flush-td6406981.html
 
 abort_item = function(item)
   abortgrab = true
@@ -149,10 +150,6 @@ find_item = function(url)
         type_ = "group-members"
       elseif string.find(url, "wall") ~= nil then
         type_ = "group-wall"
-      elseif string.find(url, "thumbnails") ~= nil then
-        type_ = "group-icon-json"
-      elseif string.find(url, "thumbnails") ~= nil then
-        type_ = "group-icon-image"
       elseif string.find(url, "groups") ~= nil then
         type_ = "group-meta"
       end
@@ -246,16 +243,15 @@ allowed = function(url, parenturl)
   end
 
   if string.match(url, "^https?://[^/]*rbxcdn.com/") then
-    if item_type == "group-icon-image" then
-      return true
-    end
-    return false
+    return item_type == "group-meta"
   end
 
   if not string.match(url, "^https?://[^/]*roblox%.com")
-    and not string.match(url, "^https?://[^/]*rbxcdn%.com/") then
+          and not string.match(url, "^https?://[^/]*rbxcdn%.com/") then
     discover_item(discovered_outlinks, string.match(percent_encode_url(url), "^([^%s]+)"))
     return false
+  else
+    return true
   end
 
   for _, pattern in pairs({
@@ -413,6 +409,19 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
 
   local file_contents = read_file(file)
 
+  if item_type == "group-meta" then
+    check("https://thumbnails.roblox.com/v1/groups/icons?groupIds=" .. item_value .. "&size=420x420&format=Webp&isCircular=false")
+    check("https://thumbnails.roblox.com/v1/groups/icons?groupIds=" .. item_value .. "&size=420x420&format=Png&isCircular=false")
+
+    if string.match(url, "^https?://thumbnails%.roblox%.com/v1/groups/icons") then
+      local json_data = cjson.decode(file_contents)["data"]
+
+      if #json_data > 0 then
+        check(json_data[1]["imageUrl"])
+      end
+    end
+  end
+
 
   local wall_id = string.match(url, "^https?://groups%.roblox%.com/v2/groups/(%d+)/wall/posts%?")
   if wall_id then
@@ -439,21 +448,6 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     if nextpagecursor ~= cjson.null then
       discover_item(discovered_items, "group-members-cursored:"..members_id..":"..nextpagecursor)
     end
-  end
-
-  if item_type == "group-icon-json" then
-    local json_data = cjson.decode(file_contents)["data"]
-
-    -- The json field "data" is empty
-    if #json_data == 0 then
-      return
-    end
-
-    local next_url = json_data[1]["imageUrl"]
-    local item_value = next_url:gsub("https?://", ""):gsub("/", "_")
-
-    table.insert(urls, { url=next_url })
-    discover_item(discovered_items, "group-icon-image:"..item_value)
   end
 
   return urls
@@ -617,6 +611,7 @@ end
 wget.callbacks.before_exit = function(exit_status, exit_status_string)
   -- Stop 429s in testing
   if os.getenv("DO_DEBUG") and os.getenv("DO_DEBUG") ~= "" then
+    print("Sleeping to avoid the rate limit")
     os.execute("sleep 60")
     return
   end
