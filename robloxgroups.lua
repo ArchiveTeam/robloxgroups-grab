@@ -326,28 +326,31 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
 
 
   if item_type == "group-meta" then
-    if status_code ~= 400 then
-      check("https://thumbnails.roblox.com/v1/groups/icons?groupIds=" ..
-          item_value .. "&size=420x420&format=Webp&isCircular=false")
-      check("https://thumbnails.roblox.com/v1/groups/icons?groupIds=" ..
-          item_value .. "&size=420x420&format=Png&isCircular=false")
+    if string.match(url, "^https?://groups%.roblox%.com/v1/groups/([0-9]+)/?$") then
+      if status_code ~= 400 then
+        check("https://thumbnails.roblox.com/v1/groups/icons?groupIds=" ..
+            item_value .. "&size=420x420&format=Webp&isCircular=false")
+        check("https://thumbnails.roblox.com/v1/groups/icons?groupIds=" ..
+            item_value .. "&size=420x420&format=Png&isCircular=false")
 
-      -- What used to be separate initial items
-      check("https://groups.roblox.com/v1/groups/" .. item_value .. "/roles")
-      check("https://apis.roblox.com/community-links/v1/groups/" .. item_value .. "/shout")
-      check("https://groups.roblox.com/v1/featured-content/event?groupId=" .. item_value)
-      check("https://groups.roblox.com/v1/groups/" .. item_value .. "/name-history?limit=100&sortOrder=Asc")
-      check("https://groups.roblox.com/v1/groups/" .. item_value .. "/users?limit=100&sortOrder=Asc")
-      check("https://groups.roblox.com/v2/groups/" .. item_value .. "/wall/posts?limit=100&sortOrder=Asc")
-
-      if string.match(url, "^https?://thumbnails%.roblox%.com/v1/groups/icons") then
-        local json_data = cjson.decode(file_contents)["data"]
-        if #json_data > 0 then
-          check(json_data[1]["imageUrl"])
-        end
+        -- What used to be separate initial items
+        check("https://groups.roblox.com/v1/groups/" .. item_value .. "/roles")
+        check("https://apis.roblox.com/community-links/v1/groups/" .. item_value .. "/shout")
+        check("https://groups.roblox.com/v1/featured-content/event?groupId=" .. item_value)
+        check("https://groups.roblox.com/v1/groups/" .. item_value .. "/name-history?limit=100&sortOrder=Asc")
+        check("https://groups.roblox.com/v1/groups/" .. item_value .. "/users?limit=100&sortOrder=Asc")
+        check("https://groups.roblox.com/v2/groups/" .. item_value .. "/wall/posts?limit=100&sortOrder=Asc")
+        
+        local name_cleaned = cjson.decode(file_contents)["name"]:gsub("[^a-zA-Z0-9]+", "-"):gsub("^%-", ""):gsub("%-$", "")
+        check("https://www.roblox.com/communities/" .. item_value .. "/" .. name_cleaned)
+      else
+        assert(cjson.decode(file_contents)["errors"][1]["message"] == "Group is invalid or does not exist.")
       end
-    else
-      assert(cjson.decode(file_contents)["errors"][1]["message"] == "Group is invalid or does not exist.")
+    elseif string.match(url, "^https?://thumbnails%.roblox%.com/v1/groups/icons") then
+      local json_data = cjson.decode(file_contents)["data"]
+      if #json_data > 0 then
+        check(json_data[1]["imageUrl"])
+      end
     end
   end
 
