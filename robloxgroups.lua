@@ -15,7 +15,6 @@ local item_user = nil
 local url_count = 0
 local tries = 0
 local downloaded = {}
-local seen_200 = {}
 local addedtolist = {}
 local abortgrab = false
 local killgrab = false
@@ -325,26 +324,33 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
 
   local file_contents = read_file(file)
 
+
   if item_type == "group-meta" then
-    check("https://thumbnails.roblox.com/v1/groups/icons?groupIds=" .. item_value .. "&size=420x420&format=Webp&isCircular=false")
-    check("https://thumbnails.roblox.com/v1/groups/icons?groupIds=" .. item_value .. "&size=420x420&format=Png&isCircular=false")
+    if status_code ~= 400 then
+      check("https://thumbnails.roblox.com/v1/groups/icons?groupIds=" ..
+          item_value .. "&size=420x420&format=Webp&isCircular=false")
+      check("https://thumbnails.roblox.com/v1/groups/icons?groupIds=" ..
+          item_value .. "&size=420x420&format=Png&isCircular=false")
 
-    -- What used to be separate initial items
-    check("https://groups.roblox.com/v1/groups/" .. item_value .. "/roles")
-    check("https://apis.roblox.com/community-links/v1/groups/" .. item_value .. "/shout")
-    check("https://groups.roblox.com/v1/featured-content/event?groupId=" .. item_value)
-    check("https://groups.roblox.com/v1/groups/" .. item_value .. "/name-history?limit=100&sortOrder=Asc")
-    check("https://groups.roblox.com/v1/groups/" .. item_value .. "/users?limit=100&sortOrder=Asc")
-    check("https://groups.roblox.com/v2/groups/" .. item_value .. "/wall/posts?limit=100&sortOrder=Asc")
-    -- TODO html
+      -- What used to be separate initial items
+      check("https://groups.roblox.com/v1/groups/" .. item_value .. "/roles")
+      check("https://apis.roblox.com/community-links/v1/groups/" .. item_value .. "/shout")
+      check("https://groups.roblox.com/v1/featured-content/event?groupId=" .. item_value)
+      check("https://groups.roblox.com/v1/groups/" .. item_value .. "/name-history?limit=100&sortOrder=Asc")
+      check("https://groups.roblox.com/v1/groups/" .. item_value .. "/users?limit=100&sortOrder=Asc")
+      check("https://groups.roblox.com/v2/groups/" .. item_value .. "/wall/posts?limit=100&sortOrder=Asc")
 
-    if string.match(url, "^https?://thumbnails%.roblox%.com/v1/groups/icons") then
-      local json_data = cjson.decode(file_contents)["data"]
-      if #json_data > 0 then
-        check(json_data[1]["imageUrl"])
+      if string.match(url, "^https?://thumbnails%.roblox%.com/v1/groups/icons") then
+        local json_data = cjson.decode(file_contents)["data"]
+        if #json_data > 0 then
+          check(json_data[1]["imageUrl"])
+        end
       end
+    else
+      assert(cjson.decode(file_contents)["errors"][1]["message"] == "Group is invalid or does not exist.")
     end
   end
+
 
 
   -- These apply for the initial page and the cursored versions
@@ -391,7 +397,8 @@ wget.callbacks.write_to_warc = function(url, http_stat)
   is_initial_url = false
 
   if http_stat["statcode"] ~= 200
-    and http_stat["statcode"] ~= 404 then
+    and http_stat["statcode"] ~= 404
+    and http_stat["statcode"] ~= 400 then
     retry_url = true
     return false
   end
@@ -438,7 +445,7 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     io.stdout:flush()
     tries = tries + 1
     local maxtries = 11
-    if status_code == 400 or status_code == 403 or status_code == 429 or status_code == 500 then
+    if status_code == 403 or status_code == 429 or status_code == 500 then
       tries = maxtries + 1
     end
     if tries > maxtries then
@@ -457,12 +464,6 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     os.execute("sleep " .. sleep_time)
     return wget.actions.CONTINUE
   else
-    if status_code == 200 then
-      if not seen_200[url["url"]] then
-        seen_200[url["url"]] = 0
-      end
-      seen_200[url["url"]] = seen_200[url["url"]] + 1
-    end
     downloaded[url["url"]] = true
   end
 
