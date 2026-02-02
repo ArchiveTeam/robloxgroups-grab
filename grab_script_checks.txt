@@ -44,6 +44,10 @@ some exact https://groups.roblox.com/v2/groups/2919215/wall/posts?limit=100&curs
 [group-meta:3557875]
 some exact https://www.roblox.com/communities/3557875/AME-Anime-Manga-Espa-ol
 
+# Single quotes handled specially in these
+[group-meta:4993777]
+some exact https://www.roblox.com/communities/4993777/HazretiEralps-Gang
+
 # Group that does not exist
 [group-meta:111111111]
 some exact https://groups.roblox.com/v1/groups/111111111

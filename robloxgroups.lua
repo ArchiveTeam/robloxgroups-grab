@@ -341,7 +341,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
         check("https://groups.roblox.com/v1/groups/" .. item_value .. "/users?limit=100&sortOrder=Asc")
         check("https://groups.roblox.com/v2/groups/" .. item_value .. "/wall/posts?limit=100&sortOrder=Asc")
         
-        local name_cleaned = cjson.decode(file_contents)["name"]:gsub("[^a-zA-Z0-9]+", "-"):gsub("^%-", ""):gsub("%-$", "")
+        local name_cleaned = cjson.decode(file_contents)["name"]:gsub("'", ""):gsub("[^a-zA-Z0-9]+", "-"):gsub("^%-", ""):gsub("%-$", "")
         check("https://www.roblox.com/communities/" .. item_value .. "/" .. name_cleaned)
       else
         assert(cjson.decode(file_contents)["errors"][1]["message"] == "Group is invalid or does not exist.")
@@ -358,7 +358,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
 
   -- These apply for the initial page and the cursored versions
   local wall_id = string.match(url, "^https?://groups%.roblox%.com/v2/groups/(%d+)/wall/posts%?")
-  if wall_id then
+  if wall_id and status_code ~= 403 and status_code ~= 429 then
     local nextpagecursor = cjson.decode(file_contents)["nextPageCursor"]
 
     if nextpagecursor ~= cjson.null then
@@ -367,7 +367,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   end
 
   local namehistory_id = string.match(url, "^https?://groups%.roblox%.com/v1/groups/(%d+)/name-history%?")
-  if namehistory_id then
+  if namehistory_id and status_code ~= 429 then
     local nextpagecursor = cjson.decode(file_contents)["nextPageCursor"]
 
     if nextpagecursor ~= cjson.null then
@@ -376,7 +376,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   end
 
   local members_id = string.match(url, "^https?://groups.roblox.com/v1/groups/(%d+)/users%?")
-  if members_id then
+  if members_id and status_code ~= 429 then
     local nextpagecursor = cjson.decode(file_contents)["nextPageCursor"]
 
     if nextpagecursor ~= cjson.null then
@@ -401,6 +401,7 @@ wget.callbacks.write_to_warc = function(url, http_stat)
 
   if http_stat["statcode"] ~= 200
     and http_stat["statcode"] ~= 404
+    and http_stat["statcode"] ~= 403
     and http_stat["statcode"] ~= 400 then
     retry_url = true
     return false
@@ -447,9 +448,9 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     io.stdout:write("Server returned bad response. ")
     io.stdout:flush()
     tries = tries + 1
-    local maxtries = 11
-    if status_code == 403 or status_code == 429 or status_code == 500 then
-      tries = maxtries + 1
+    local maxtries = 4
+    if status_code == 429 then
+      maxtries = 6
     end
     if tries > maxtries then
       io.stdout:write(" Skipping.\n")
@@ -459,9 +460,12 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
       return wget.actions.EXIT
     end
     local sleep_time = math.random(
-      math.floor(math.pow(2, tries-0.5)),
-      math.floor(math.pow(2, tries))
+      math.floor(math.pow(3, tries-0.5)),
+      math.floor(math.pow(3, tries))
     )
+    if status_code == 429 then
+      sleep_time = sleep_time + 700
+    end
     io.stdout:write("Sleeping " .. sleep_time .. " seconds.\n")
     io.stdout:flush()
     os.execute("sleep " .. sleep_time)
