@@ -51,3 +51,7 @@ some exact https://www.roblox.com/communities/4993777/HazretiEralps-Gang
 # Group that does not exist
 [group-meta:111111111]
 some exact https://groups.roblox.com/v1/groups/111111111
+
+# Shout disabled
+[group-meta:13641941]
+some exact https://apis.roblox.com/community-links/v1/groups/13641941/shout
