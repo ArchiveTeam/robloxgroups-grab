@@ -502,8 +502,8 @@ wget.callbacks.finish = function(start_time, end_time, wall_time, numurls, total
   end
   file:close()
   for key, data in pairs({
-    ["robloxgroups-asdfgh"] = discovered_items,
-    --["urls-asdfgh"] = discovered_outlinks
+    ["robloxgroups-tbs748r6rw99euh6"] = discovered_items,
+    --["urls-"] = discovered_outlinks
   }) do
     print("queuing for", string.match(key, "^(.+)%-"))
     local items = nil
