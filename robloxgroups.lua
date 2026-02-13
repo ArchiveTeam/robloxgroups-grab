@@ -479,7 +479,7 @@ wget.callbacks.finish = function(start_time, end_time, wall_time, numurls, total
         return false
       end
       local body, code, headers, status = http.request(
-        "http://tracker/backfeed/legacy/" .. key,
+        "https://legacy-api.arpa.li/backfeed/legacy/" .. key,
         items .. "\0"
       )
       if code == 200 and body ~= nil and cjson.decode(body)["status_code"] == 200 then
