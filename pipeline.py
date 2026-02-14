@@ -76,7 +76,7 @@ if not WGET_AT:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20260213.01'
+VERSION = '20260214.01'
 USER_AGENT = 'Mozilla/5.0 (X11; Linux i686; rv:145.0) Gecko/20100101 Firefox/145.0'
 TRACKER_ID = 'robloxgroups'
 TRACKER_HOST = 'legacy-api.arpa.li'
@@ -306,8 +306,8 @@ project = Project(
 pipeline = Pipeline(
     CheckIP(),
     GetItemFromTracker('http://{}/{}/multi={}/'
-            .format(TRACKER_HOST, TRACKER_ID, MULTI_ITEM_SIZE),
-            downloader, VERSION),
+        .format(TRACKER_HOST, TRACKER_ID, MULTI_ITEM_SIZE),
+        downloader, VERSION),
     PrepareDirectories(warc_prefix=TRACKER_ID),
     WgetDownload(
         WgetArgs(),
@@ -317,8 +317,7 @@ pipeline = Pipeline(
             'item_dir': ItemValue('item_dir'),
             'item_names': ItemValue('item_name_newline'),
             'warc_file_base': ItemValue('warc_file_base'),
-            'concurrency': ItemValue('concurrency'),
-            'DO_DEBUG': os.environ.get('DO_DEBUG')
+            'concurrency': ItemValue('concurrency')
         }
     ),
     SetBadUrls(),
