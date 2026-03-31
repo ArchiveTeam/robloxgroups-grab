@@ -63,7 +63,7 @@ WGET_AT = find_executable(
     ),
     [
         './wget-at',
-        '/home/warrior/data/wget-at'
+        '/home/warrior/data/wget-at-nss'
     ]
 )
 
@@ -76,7 +76,7 @@ if not WGET_AT:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20260327.01'
+VERSION = '20260331.01'
 USER_AGENT = 'Mozilla/5.0 (X11; Linux i686; rv:145.0) Gecko/20100101 Firefox/145.0'
 TRACKER_ID = 'robloxgroups'
 TRACKER_HOST = 'legacy-api.arpa.li'
@@ -247,7 +247,9 @@ class WgetArgs(object):
             '--warc-header', 'operator: Archive Team',
             '--warc-header', 'x-wget-at-project-version: ' + VERSION,
             '--warc-header', 'x-wget-at-project-name: ' + TRACKER_ID,
-            '--warc-dedup-url-agnostic'
+            '--warc-dedup-url-agnostic',
+            '--impersonate', 'firefox148-h1',
+            '--header', 'Accept-Encoding: identity'
         ]
 
         if '--concurrent' in sys.argv:
