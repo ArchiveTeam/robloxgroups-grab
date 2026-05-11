@@ -324,9 +324,13 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
         check("https://groups.roblox.com/v1/groups/" .. item_value .. "/roles")
         check("https://apis.roblox.com/community-links/v1/groups/" .. item_value .. "/shout")
         check("https://groups.roblox.com/v1/featured-content/event?groupId=" .. item_value)
-        check("https://groups.roblox.com/v1/groups/" .. item_value .. "/name-history?limit=100&sortOrder=Asc")
         check("https://groups.roblox.com/v1/groups/" .. item_value .. "/users?limit=100&sortOrder=Asc")
-        check("https://groups.roblox.com/v2/groups/" .. item_value .. "/wall/posts?limit=100&sortOrder=Asc")
+
+        if cjson.decode(file_contents)["isLocked"] == false then
+          -- Only check for groups that are not locked, since they give =400s.
+          check("https://groups.roblox.com/v1/groups/" .. item_value .. "/name-history?limit=100&sortOrder=Asc")
+          check("https://groups.roblox.com/v2/groups/" .. item_value .. "/wall/posts?limit=100&sortOrder=Asc")
+        end
         
         local name_cleaned = cjson.decode(file_contents)["name"]:gsub("'", ""):gsub("[^a-zA-Z0-9]+", "-"):gsub("^%-", ""):gsub("%-$", "")
         if name_cleaned == "" then
