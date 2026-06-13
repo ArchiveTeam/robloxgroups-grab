@@ -370,7 +370,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   end
 
   local members_id = string.match(url, "^https?://groups.roblox.com/v1/groups/(%d+)/users%?")
-  if members_id and status_code ~= 429 then
+  if members_id and status_code ~= 429 and status_code ~= 400 then
     local nextpagecursor = cjson.decode(file_contents)["nextPageCursor"]
 
     if nextpagecursor ~= cjson.null then
